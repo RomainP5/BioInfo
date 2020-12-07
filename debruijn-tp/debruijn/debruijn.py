@@ -16,21 +16,20 @@
 import argparse
 import os
 import sys
-import networkx as nx
 import matplotlib
-from operator import itemgetter
+import networkx as nx
+import operator 
 import random
 random.seed(9001)
-from random import randint
 import statistics
 
-__author__ = "Your Name"
+__author__ = "Romain Pholoppe"
 __copyright__ = "Universite Paris Diderot"
-__credits__ = ["Your Name"]
+__credits__ = ["Romain Pholoppe"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Your Name"
-__email__ = "your@email.fr"
+__maintainer__ = "Romain Pholoppe"
+__email__ = "pholoppero@eisti.eu"
 __status__ = "Developpement"
 
 def isfile(path):
@@ -66,19 +65,39 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    pass
+    fichier = open(fastq_file, "r")
+    for lignes in fichier:
+        sequence = lignes.strip('\n')
+        yield(sequence)
+    fichier.close()
 
 
 def cut_kmer(read, kmer_size):
-    pass
+    for i in range(len(read) + 1 - kmer_size):
+        kmer = read[i:i + kmer_size]
+        yield(kmer)
 
 
 def build_kmer_dict(fastq_file, kmer_size):
-    pass
+    dico=dict()
+    for ligne in read_fastq(fastq_file):
+        temp = cut_kmer(ligne, kmer_size)
+        for kmer in temp:
+            if kmer in dico:
+                dico[kmer] += 1
+            else :
+                dico[kmer] = 1
+    return dico
 
 
 def build_graph(kmer_dict):
-    pass
+    graph = nx.DiGraph()
+    for kmer in kmer_dict:
+        precedant = kmer[:-1]
+        suivant = kmer[1:]
+        graph.add_edge(precedant, suivant, weight = kmer_dict[kmer])
+    return graph
+
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
@@ -108,10 +127,18 @@ def solve_out_tips(graph, ending_nodes):
     pass
 
 def get_starting_nodes(graph):
-    pass
+    noeuds = []
+    for n in graph.nodes() : 
+        if graph.predecessors(n)==False:
+            noeuds.append(n)
+    return noeuds
 
 def get_sink_nodes(graph):
-    pass
+    noeuds = []
+    for n in graph.nodes() : 
+        if graph.succesors(n)==False:
+            noeuds.append(n)
+    return noeuds
 
 def get_contigs(graph, starting_nodes, ending_nodes):
     pass
