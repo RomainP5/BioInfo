@@ -18,7 +18,7 @@ import os
 import sys
 import matplotlib
 import networkx as nx
-import operator 
+import operator
 import random
 random.seed(9001)
 import statistics
@@ -65,10 +65,11 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    fichier = open(fastq_file, "r")
+    fichier = open(fastq_file, "rt")
     for lignes in fichier:
-        sequence = lignes.strip('\n')
-        yield(sequence)
+        yield next(fichier).strip("\n")
+        next(fichier)
+        next(fichier)
     fichier.close()
 
 
@@ -107,7 +108,7 @@ def std(data):
     pass
 
 
-def select_best_path(graph, path_list, path_length, weight_avg_list, 
+def select_best_path(graph, path_list, path_length, weight_avg_list,
                      delete_entry_node=False, delete_sink_node=False):
     pass
 
@@ -128,23 +129,45 @@ def solve_out_tips(graph, ending_nodes):
 
 def get_starting_nodes(graph):
     noeuds = []
-    for n in graph.nodes() : 
-        if graph.predecessors(n)==False:
+    for n in graph.nodes() :
+        if not graph.pred[n]:
             noeuds.append(n)
     return noeuds
 
 def get_sink_nodes(graph):
     noeuds = []
-    for n in graph.nodes() : 
-        if graph.succesors(n)==False:
+    for n in graph.nodes() :
+        if not graph.succ[n]:
             noeuds.append(n)
     return noeuds
 
 def get_contigs(graph, starting_nodes, ending_nodes):
-    pass
+    contigs = []
+    for S_noeud in starting_nodes:
+        for E_noeud  in ending_nodes:
+            for path in nx.all_simple_paths(graph,S_noeud,E_noeud):
+                temp = []
+                for n in range(len(path)) :
+                    temp.append(path[n][0])
+                temp.append(path[n][1])
+                contigs.append(("".join(temp), len(temp)))
+    return contigs
+
+
+def fill(text, width=80):
+    return os.linesep.join(text[i:i+width] for i in range(0, len(text), width))
 
 def save_contigs(contigs_list, output_file):
-    pass
+    save = open(output_file,"w+")
+    for i in range(len(contigs_list)):
+        save.write(">contig_%d len=%d\n"%(i,contigs_list[i][1]))
+        save.write(fill(contigs_list[i][0],80))
+        save.write("\n")
+    save.close()
+
+
+
+
 
 #==============================================================
 # Main program
