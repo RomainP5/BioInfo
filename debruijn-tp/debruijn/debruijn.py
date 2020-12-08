@@ -106,7 +106,7 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
         if delete_entry_node and delete_sink_node:
             graph.remove_nodes_from(path)
         elif not delete_entry_node and not delete_sink_node:
-            graph.remove_nodes_from(path)
+            graph.remove_nodes_from(path[1:-1])
         elif delete_entry_node:
             graph.remove_nodes_from(path[:-1])
         elif delete_sink_node:
@@ -119,7 +119,25 @@ def std(data):
 
 def select_best_path(graph, path_list, path_length, weight_avg_list,
                      delete_entry_node=False, delete_sink_node=False):
-    pass
+    top_long = []
+    top_poid=[]
+    top_chemin=[]
+    for p, poids in enumerate(weight_avg_list):
+        if poids == max(weight_avg_list):
+            top_poid.append(p)
+
+    for l, long in enumerate(path_length):
+        if l in top_poid :
+            top_long.append(long)
+
+    for e in top_poid :
+        if path_length[e] == max(top_long):
+            top_chemin.append(e)
+
+    top1 = random.choice(top_chemin)
+    chemin_graph = path_list[:top1] + path_list[top1+1:]
+    return remove_paths(graph, chemin_graph ,delete_entry_node,delete_sink_node )
+
 
 def path_average_weight(graph, path):
     #Retourne un poids moyen.
@@ -134,10 +152,31 @@ def path_average_weight(graph, path):
     return moy
 
 def solve_bubble(graph, ancestor_node, descendant_node):
-    pass
+    list_chemin = list(nx.all_simple_paths(graph,ancestor_node,descendant_node))
+    longueur_chemin = []
+    poid_moy =[]
+    for chemin in list_chemin:
+        longueur_chemin.append(len(chemin))
+        poid_moy.append(path_average_weight(graph, chemin))
+    return select_best_path(graph, list_chemin, longueur_chemin, poid_moy)
+
 
 def simplify_bubbles(graph):
-    pass
+    for d_noeud in get_starting_nodes(graph) :
+        for a_noeud in get_sink_nodes(graph) :
+            noeud_depart = d_noeud
+            noeud_arrive = a_noeud
+            pre= list(graph.pred[noeud_depart])
+            sui=list(graph.succ[noeud_arrive])
+            while sui and len(sui)<2:
+                noeud_depart = sui[0]
+                sui=list(graph.succ[noeud_arrive])
+            while pre and len(pre)<2:
+                noeud_arrive = pre[0]
+                pre=list(graph.pred[noeud_depart])
+            if list(nx.all_simple_paths(graph, noeud_depart, noeud_arrive)):
+                graph = solve_bubble(graph, noeud_depart, noeud_arrive)
+    return graph
 
 def solve_entry_tips(graph, starting_nodes):
     pass
