@@ -190,9 +190,12 @@ def solve_entry_tips(graph, starting_nodes):
             suivant = list(graph.succ[noeud])
             precedent = list(graph.pred[noeud])
         liste.append(path)
-    path_lengths = [len(path) for path in liste]
-    avg_path_weights = [path_average_weight(graph, path) for path in liste]
-    graph = select_best_path(graph, liste, path_lengths, avg_path_weights,delete_entry_node=True)
+    longueur_chemin=[]
+    poid_moy = []
+    for chemin in liste :
+        longueur_chemin.append(len(chemin))
+        poid_moy.append(path_average_weight(graph, chemin))
+    graph = select_best_path(graph, liste, longueur_chemin, poid_moy,delete_entry_node=True)
     return graph
 
 def solve_out_tips(graph, ending_nodes):
@@ -208,9 +211,12 @@ def solve_out_tips(graph, ending_nodes):
             suivant = list(graph.succ[noeud])
             precedent = list(graph.pred[noeud])
         liste.append(path[::-1])
-    path_lengths = [len(path) for path in liste]
-    avg_path_weights = [path_average_weight(graph, path) for path in liste]
-    graph = select_best_path(graph, liste, path_lengths, avg_path_weights,delete_sink_node=True)
+    longueur_chemin=[]
+    poid_moy = []
+    for chemin in liste :
+        longueur_chemin.append(len(chemin))
+        poid_moy.append(path_average_weight(graph, chemin))
+    graph = select_best_path(graph, liste, longueur_chemin, poid_moy,delete_sink_node=True)
     return graph
 
 def get_starting_nodes(graph):
