@@ -65,18 +65,17 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    fichier = open(fastq_file, "rt")
-    for lignes in fichier:
-        yield next(fichier).strip("\n")
-        next(fichier)
-        next(fichier)
-    fichier.close()
+    with open(fastq_file, "rt") as fichier:
+        for lignes in fichier:
+            yield next(fichier).strip("\n")
+            next(fichier)
+            next(fichier)
 
 
 def cut_kmer(read, kmer_size):
     for i in range(len(read) + 1 - kmer_size):
         kmer = read[i:i + kmer_size]
-        yield(kmer)
+        yield kmer
 
 
 def build_kmer_dict(fastq_file, kmer_size):
@@ -179,10 +178,40 @@ def simplify_bubbles(graph):
     return graph
 
 def solve_entry_tips(graph, starting_nodes):
-    pass
+    graph = simplify_bubbles(graph)
+    liste = []
+    for noeud in starting_nodes:
+        path = [noeud]
+        suivant = list(graph.succ[noeud])
+        precedent = list(graph.pred[noeud])
+        while  len(precedent) < 2 and len(suivant) < 2 and suivant:
+            noeud = suivant[0]
+            path.append(noeud)
+            suivant = list(graph.succ[noeud])
+            precedent = list(graph.pred[noeud])
+        liste.append(path)
+    path_lengths = [len(path) for path in liste]
+    avg_path_weights = [path_average_weight(graph, path) for path in liste]
+    graph = select_best_path(graph, liste, path_lengths, avg_path_weights,delete_entry_node=True)
+    return graph
 
 def solve_out_tips(graph, ending_nodes):
-    pass
+    graph = simplify_bubbles(graph)
+    liste = []
+    for noeud in ending_nodes:
+        path = [noeud]
+        suivant = list(graph.succ[noeud])
+        precedent = list(graph.pred[noeud])
+        while len(precedent) < 2 and len(suivant) < 2 and precedent :
+            noeud = precedent[0]
+            path.append(noeud)
+            suivant = list(graph.succ[noeud])
+            precedent = list(graph.pred[noeud])
+        liste.append(path[::-1])
+    path_lengths = [len(path) for path in liste]
+    avg_path_weights = [path_average_weight(graph, path) for path in liste]
+    graph = select_best_path(graph, liste, path_lengths, avg_path_weights,delete_sink_node=True)
+    return graph
 
 def get_starting_nodes(graph):
     noeuds = []
@@ -235,6 +264,20 @@ def main():
     """
     # Get arguments
     args = get_arguments()
+    f = args.fastq_file
+    l = args.kmer_size
+    o = args.output_file
+    graph=build_graph(build_kmer_dict(f,l))
+    res = simplify_bubbles(graph)
+    noeud_depart = get_starting_nodes(res)
+    noeud_arrive = get_sink_nodes(res)
+    res = solve_entry_tips(res, noeud_depart)
+    res = solve_out_tips(res, noeud_arrive)
+
+    contigs = get_contigs(res, get_starting_nodes(res), get_sink_nodes(res))
+    save_contigs(contigs, o)
+
+
 
 if __name__ == '__main__':
     main()
